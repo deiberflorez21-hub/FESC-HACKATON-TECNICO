@@ -1,0 +1,43 @@
+# Prueba de repetibilidad del proceso de cierre:
+
+# 1. Primera ejecución
+$ ./run.sh
+>> Ejecutando proceso de cierre de afiliados...
+Cierre finalizado exitosamente:
+  total_afiliados=1500
+  activos=1194
+  inactivos=274
+  excepciones=104
+  top_error=CIE-4012 (1424)
+>> Cierre completado con éxito.
+
+$ md5sum output/* > /tmp/output_run1.md5
+
+# 2. Segunda ejecución consecutiva
+$ ./run.sh
+>> Ejecutando proceso de cierre de afiliados...
+Cierre finalizado exitosamente:
+  total_afiliados=1500
+  activos=1194
+  inactivos=274
+  excepciones=104
+  top_error=CIE-4012 (1424)
+>> Cierre completado con éxito.
+
+$ md5sum output/* > /tmp/output_run2.md5
+
+# Verificación de identidad entre ejecuciones:
+$ diff -u /tmp/output_run1.md5 /tmp/output_run2.md5
+# (Sin diferencias: salidas 100% idénticas y repetibles)
+
+# Diagnóstico de la falla original:
+# El script anterior ejecutaba `mv $ENTRADA/AFI_MAE.csv $ENTRADA/procesados/`,
+# eliminando el archivo de entrada e impidiendo ejecuciones posteriores.
+# Solución: Se eliminó la instrucción destructiva, preservando la idempotencia completa.
+
+$ find data/ -name "*.csv" | sort
+data/AFI_BEN.csv
+data/AFI_MAE.csv
+data/APORTES.csv
+data/EMPRESA.csv
+data/extracto_caja_oriente.csv

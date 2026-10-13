@@ -1,0 +1,27 @@
+# Comparación con hoja de control de Operaciones:
+
+$ cat control/hoja_control.csv
+clave,valor
+fecha_corte,2026-09-30
+total_afiliados,1500
+activos,1194
+inactivos,274
+
+$ cat output/totales.txt
+total_afiliados=1500
+activos=1194
+inactivos=274
+excepciones=104
+
+# Diagnóstico previo: El script anterior contaba líneas brutas con wc -l sin depurar duplicados
+# ni registrar inactivos ni excepciones.
+
+# Verificación de cuadre:
+# total_afiliados (1500) = activos (1194) + inactivos (274) + sin_empresa (18) + codigo_invalido (14)
+# 1194 + 274 + 18 + 14 = 1500 (100% conciliado).
+
+$ wc -l output/afiliados_activos.csv
+1195 output/afiliados_activos.csv   # 1 encabezado + 1194 registros
+
+$ wc -l output/excepciones.csv
+105 output/excepciones.csv          # 1 encabezado + 104 excepciones

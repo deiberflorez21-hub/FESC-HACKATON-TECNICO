@@ -1,0 +1,38 @@
+$ curl -s -i http://localhost:8081/afiliados/1098765432
+HTTP/1.0 503 Service Unavailable
+Content-Type: application/json; charset=utf-8
+Content-Length: 42
+
+{"error": "base de datos no disponible"}
+
+$ docker compose logs cierre-api | tail -n 5
+2026-09-30 20:00:15,123 ERROR [cierre-api] CIE-2210 No hay conexión con la base de datos: could not translate host name "cierre-database" to address: Name or service not known
+
+$ grep DATABASE_HOST .env.example
+DATABASE_HOST=cierre-database
+
+$ grep -A 2 'services:' docker-compose.yml
+services:
+  cierre-db:
+    image: postgres:16-alpine
+
+# Diagnóstico: El nombre de host en .env es cierre-database, pero el servicio en compose es cierre-db.
+# Solución: Modificar DATABASE_HOST=cierre-db en .env.
+
+$ sed -i 's/DATABASE_HOST=cierre-database/DATABASE_HOST=cierre-db/' .env
+$ docker compose restart cierre-api
+[+] Restarting 1/1
+ ✔ Container terminal-rescue-cierre-api-1  Started
+
+$ docker compose exec cierre-db psql -U cierre -d cierre -c "SELECT count(*) FROM afi_mae;"
+ count 
+-------
+  1520
+(1 row)
+
+$ curl -s -i http://localhost:8081/afiliados/1098765432
+HTTP/1.0 200 OK
+Content-Type: application/json; charset=utf-8
+Content-Length: 95
+
+{"documento": "1098765432", "nombre": "JUAN CARLOS PEREZ GOMEZ", "estado": "ACTIVO", "empresa": "EMPRESA ABC"}

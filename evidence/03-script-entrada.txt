@@ -1,0 +1,34 @@
+$ ./scripts/cierre.sh
+Leyendo afiliados desde /opt/cierre/entrada/AFI_MAE.csv
+awk: fatal: cannot open file `/opt/cierre/entrada/AFI_MAE.csv' for reading: No such file or directory
+
+$ grep 'ENTRADA=' scripts/cierre.sh
+ENTRADA=/opt/cierre/entrada
+
+$ find . -name "AFI_MAE.csv"
+./data/AFI_MAE.csv
+
+$ ls -ld data/
+drwxr-xr-x 2 user group 4096 Oct 13 20:30 data/
+
+$ chmod +x scripts/cierre.sh run.sh
+
+# Diagnóstico: La variable ENTRADA apuntaba a una ruta fija inexistente /opt/cierre/entrada.
+# Solución: Usar ruta relativa data/ y directorio de ejecución relativo a la raíz del repositorio.
+
+$ ./scripts/cierre.sh
+>> Ejecutando proceso de cierre de afiliados...
+Cierre finalizado exitosamente:
+  total_afiliados=1500
+  activos=1194
+  inactivos=274
+  excepciones=104
+  top_error=CIE-4012 (1424)
+>> Cierre completado con éxito.
+
+$ ls -lh output/
+total 128K
+-rw-r--r-- 1 user group 95K Oct 13 21:30 afiliados_activos.csv
+-rw-r--r-- 1 user group  8K Oct 13 21:30 excepciones.csv
+-rw-r--r-- 1 user group 45B Oct 13 21:30 top_error.txt
+-rw-r--r-- 1 user group 68B Oct 13 21:30 totales.txt

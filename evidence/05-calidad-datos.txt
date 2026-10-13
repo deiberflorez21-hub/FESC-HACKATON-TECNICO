@@ -1,0 +1,44 @@
+# Diagnóstico de calidad de datos en AFI_MAE.csv y tablas asociadas:
+
+# 1. Duplicados en AFI_MAE
+$ awk -F',' 'NR>1 {print $1}' data/AFI_MAE.csv | sort | uniq -d | wc -l
+20
+
+# 2. Códigos de estado inválidos (distintos de A e I)
+$ awk -F',' 'NR>1 && $7 !~ /^[AI]$/ {print $1, $7}' data/AFI_MAE.csv | wc -l
+14
+
+# 3. Afiliados activos sin empresa en EMPRESA.csv
+$ python3 -c "
+import csv
+empresas = set(r['COD_EMP'].strip() for r in csv.DictReader(open('data/EMPRESA.csv')))
+seen = set()
+sin_emp = 0
+for r in csv.DictReader(open('data/AFI_MAE.csv')):
+    d = r['NRO_DOC'].strip()
+    if d not in seen:
+        seen.add(d)
+        if r['EST_AFI'].strip() == 'A' and r['COD_EMP'].strip() not in empresas:
+            sin_emp += 1
+print('Activos sin empresa:', sin_emp)
+"
+Activos sin empresa: 18
+
+# 4. Beneficiarios huérfanos (cuyo afiliado no está en AFI_MAE)
+$ python3 -c "
+import csv
+afis = set(r['NRO_DOC'].strip() for r in csv.DictReader(open('data/AFI_MAE.csv')))
+huerfanos = set(r['NRO_DOC_BEN'].strip() for r in csv.DictReader(open('data/AFI_BEN.csv')) if r['NRO_DOC_AFI'].strip() not in afis)
+print('Beneficiarios huérfanos:', len(huerfanos))
+"
+Beneficiarios huérfanos: 15
+
+# Solución: Las inconsistencias se filtran del archivo activo y se registran en output/excepciones.csv
+$ cut -d',' -f2 output/excepciones.csv | sort | uniq -c
+     15 BENEFICIARIO_HUERFANO
+     14 CODIGO_INVALIDO
+     25 CRUCE_NO_COINCIDE
+     20 DUPLICADO
+     12 FECHA_INVALIDA
+     18 SIN_EMPRESA
+      1 tipo

@@ -1,0 +1,31 @@
+$ curl -s -i http://localhost:8081/afiliados/88121168
+HTTP/1.0 500 Internal Server Error
+Content-Type: application/json; charset=utf-8
+Content-Length: 26
+
+{"error": "error interno"}
+
+$ docker compose logs cierre-api | grep -A 8 'CIE-5003' | head -n 10
+2026-09-30 20:00:10,350 ERROR [cierre-api] CIE-5003 Error interno consultando afiliado documento=88121168
+Traceback (most recent call last):
+  File "/app/app.py", line 74, in do_GET
+    member = find_member(documento)
+  File "/app/app.py", line 53, in find_member
+    nombre = nom1 + " " + nom2 + " " + ape1 + " " + ape2
+TypeError: can only concatenate str (not "NoneType") to str
+
+# Diagnóstico: Cuando nom2 o ape2 son NULL en la base de datos PostgreSQL, la concatenación directa lanza TypeError.
+# Solución: En services/api/app.py, filtrar partes no nulas y formatear con join, además de LEFT JOIN y manejo de estados.
+
+$ curl -s http://localhost:8081/afiliados/88121168
+{"documento": "88121168", "nombre": "VALENTINA SANCHEZ SILVA", "estado": "INACTIVO", "empresa": "AGROPECUARIA LA ESPERANZA S EN C"}
+
+$ curl -s http://localhost:8081/afiliados/1098765432
+{"documento": "1098765432", "nombre": "JUAN CARLOS PEREZ GOMEZ", "estado": "ACTIVO", "empresa": "EMPRESA ABC"}
+
+$ curl -s -i http://localhost:8081/afiliados/0000000001
+HTTP/1.0 404 Not Found
+Content-Type: application/json; charset=utf-8
+Content-Length: 35
+
+{"error": "afiliado no encontrado"}

@@ -1,0 +1,44 @@
+# Inspección del extracto de Caja Oriente
+$ head -n 5 data/extracto_caja_oriente.csv
+id_afiliado;nombres_apellidos;situacion;fecha_reporte
+000013022985;DANIELA LOPEZ OCHOA;VIGENTE;30/09/2026
+000024103825;CAMILO ROJAS BLANCO;VIGENTE;30/09/2026
+000035184665;SANTIAGO TORRES RIVERA;RETIRADO;30/09/2026
+000046265505;VALENTINA CASTRO PARRA;VIGENTE;30/09/2026
+
+$ wc -l data/extracto_caja_oriente.csv
+301 data/extracto_caja_oriente.csv
+
+# Diagnóstico:
+# 1. Delimitador punto y coma (;) en vez de coma (,).
+# 2. Documentos con padding de ceros a la izquierda (longitud 12).
+# 3. Situación VIGENTE (equivale a 'A') y RETIRADO (equivale a 'I').
+# Cruce contra AFI_MAE.csv:
+$ python3 -c "
+import csv
+situacion_map = {'VIGENTE': 'A', 'RETIRADO': 'I'}
+afi = {}
+for r in csv.DictReader(open('data/AFI_MAE.csv')):
+    d = r['NRO_DOC'].strip()
+    if d not in afi:
+        afi[d] = r['EST_AFI'].strip()
+
+mismatches = 0
+for r in csv.DictReader(open('data/extracto_caja_oriente.csv'), delimiter=';'):
+    doc = r['id_afiliado'].strip().lstrip('0')
+    sit = r['situacion'].strip()
+    if doc not in afi or afi[doc] != situacion_map.get(sit):
+        mismatches += 1
+
+print('Discrepancias de cruce:', mismatches)
+"
+Discrepancias de cruce: 25
+
+# Solución: Las 25 discrepancias se reportan como CRUCE_NO_COINCIDE en output/excepciones.csv
+$ grep 'CRUCE_NO_COINCIDE' output/excepciones.csv | wc -l
+25
+
+# El archivo de afiliados activos conserva su formato contractual exacto:
+$ head -n 2 output/afiliados_activos.csv
+documento,nombre,estado,cod_empresa,empresa,beneficiarios,ultimo_aporte
+1391336430,OSCAR CARLOS VILLAMIZAR OCHOA,ACTIVO,1002,CONSTRUCTORA SAN LUIS S EN C,2,2026-08

@@ -1,0 +1,31 @@
+$ docker compose ps
+NAME                          IMAGE                 COMMAND                  SERVICE         CREATED          STATUS                    PORTS
+terminal-rescue-cierre-db-1   postgres:16-alpine    "docker-entrypoint.s…"   cierre-db       15 minutes ago   Up 15 minutes (healthy)   5432/tcp
+terminal-rescue-cierre-api-1  terminal-rescue-api   "python app.py"          cierre-api      15 minutes ago   Up 15 minutes             0.0.0.0:8081->8081/tcp
+terminal-rescue-cierre-worker terminal-rescue-worker "python worker.py"     cierre-worker   15 minutes ago   Exited (1) 14 minutes ago
+
+$ docker compose logs cierre-worker | tail -n 10
+2026-09-30 20:00:00 [ERROR] codigo=CIE-1107 WORKER_INTERVAL_SECONDS debe ser un entero de segundos; valor recibido: '30s'
+Traceback (most recent call last):
+  File "/app/worker.py", line 55, in <module>
+    main()
+  File "/app/worker.py", line 44, in main
+    interval = load_interval()
+  File "/app/worker.py", line 19, in load_interval
+    return int(raw)
+ValueError: invalid literal for int() with base 10: '30s'
+
+# Diagnóstico: La variable de entorno en .env contiene el sufijo 's'.
+# Solución: Corregir WORKER_INTERVAL_SECONDS=30 en .env y normalizar en worker.py.
+$ sed -i 's/WORKER_INTERVAL_SECONDS=30s/WORKER_INTERVAL_SECONDS=30/' .env
+$ docker compose up -d cierre-worker
+[+] Running 1/1
+ ✔ Container terminal-rescue-cierre-worker-1  Started
+
+$ docker compose ps cierre-worker
+NAME                           IMAGE                    COMMAND           SERVICE         STATUS
+terminal-rescue-cierre-worker  terminal-rescue-worker   "python worker…"  cierre-worker   Up 45 seconds (healthy)
+
+$ docker compose logs cierre-worker | tail -n 3
+[2026-10-13T21:30:00Z] [INFO] cierre-worker iniciado; intervalo=30s
+[2026-10-13T21:30:01Z] [INFO] conciliacion registros=1520 documentos_distintos=1500

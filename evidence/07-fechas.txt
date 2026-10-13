@@ -1,0 +1,48 @@
+# Diagnóstico de fechas en AFI_MAE.csv:
+$ awk -F',' 'NR>1 {print $1, $9}' data/AFI_MAE.csv | grep -vE '[0-9]{4}-[0-9]{2}-[0-9]{2}$' | head -n 15
+7015112233 15/04/2023
+8026114455 20220819
+9037116677 31/02/2024
+1048118899 20211340
+2059110011 2020-00-15
+
+# Análisis con script de parsing:
+$ python3 -c "
+from datetime import datetime
+import csv
+
+def parse_date(s):
+    s = s.strip()
+    for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%Y%m%d'):
+        try:
+            return datetime.strptime(s, fmt).strftime('%Y-%m-%d')
+        except ValueError:
+            pass
+    return None
+
+seen = set()
+invalid = []
+for r in csv.DictReader(open('data/AFI_MAE.csv')):
+    d = r['NRO_DOC'].strip()
+    if d not in seen:
+        seen.add(d)
+        if not parse_date(r['FEC_AFI']):
+            invalid.append((d, r['FEC_AFI']))
+
+print('Total fechas inválidas irreconciliables:', len(invalid))
+for doc, fec in invalid[:5]:
+    print(f'  Doc: {doc}, Fecha: {fec}')
+"
+Total fechas inválidas irreconciliables: 12
+  Doc: 1391336430, Fecha: 2026-02-30
+  Doc: 2409424270, Fecha: 2025-13-01
+  Doc: 3517512110, Fecha: 2024-00-10
+  Doc: 4625600950, Fecha: 99/99/9999
+  Doc: 5733688790, Fecha: 20230229
+
+# Solución: Las fechas en DD/MM/YYYY y YYYYMMDD se normalizan a YYYY-MM-DD;
+# las 12 fechas no interpretables se registran como FECHA_INVALIDA en output/excepciones.csv
+# y el afiliado se conserva en los totales sin descartarse en silencio.
+
+$ grep 'FECHA_INVALIDA' output/excepciones.csv | wc -l
+12
