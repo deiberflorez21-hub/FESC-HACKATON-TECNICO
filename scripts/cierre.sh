@@ -20,8 +20,6 @@ elif command -v python >/dev/null 2>&1 && python -c "import sys" >/dev/null 2>&1
     PYTHON_CMD="python"
 elif command -v py >/dev/null 2>&1 && py -c "import sys" >/dev/null 2>&1; then
     PYTHON_CMD="py"
-elif [ -f "/c/Users/deibe/AppData/Local/Programs/Python/Python314/python.exe" ]; then
-    PYTHON_CMD="/c/Users/deibe/AppData/Local/Programs/Python/Python314/python.exe"
 fi
 
 echo ">> Ejecutando proceso de cierre de afiliados..."
