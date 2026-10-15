@@ -67,22 +67,22 @@ Adicionalmente, el proceso batch de cierre corre orquestado por scripts Bash y P
 Para consultar el estado de un afiliado mediante la API REST, realice una petición HTTP GET a la ruta `/afiliados/{documento}`:
 
 ```bash
-curl -s http://localhost:8081/afiliados/1098765432
+curl -s http://localhost:8081/afiliados/1043217865
 ```
 
 Ejemplo de respuesta exitosa (HTTP 200):
 ```json
 {
-  "documento": "1098765432",
-  "nombre": "JUAN CARLOS PEREZ GOMEZ",
+  "documento": "1043217865",
+  "nombre": "DEIBER ADRIAN FLOREZ CASTILLO",
   "estado": "ACTIVO",
-  "empresa": "EMPRESA ABC"
+  "empresa": "CAJA DE COMPENSACION FESC"
 }
 ```
 
 Si el documento no existe en el sistema, la API retornará HTTP 404:
 ```bash
-curl -s -i http://localhost:8081/afiliados/0000000001
+curl -s -i http://localhost:8081/afiliados/9999999999
 ```
 
 ### Proceso de cierre batch
